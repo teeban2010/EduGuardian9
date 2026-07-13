@@ -1,0 +1,3 @@
+full_name,student_id_number,class_name,grade_level,date_of_birth,parent_id,school_id
+Aiman Hakim,S001,5 Amanah,Form 5,2009-03-12,REPLACE_WITH_PARENT_UUID,REPLACE_WITH_SCHOOL_UUID
+Siti Nur Aisyah,S002,5 Amanah,Form 5,2009-07-08,REPLACE_WITH_PARENT_UUID,REPLACE_WITH_SCHOOL_UUID
