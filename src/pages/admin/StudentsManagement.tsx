@@ -1,11 +1,11 @@
 import {
-  ChangeEvent,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
+import type { ChangeEvent } from 'react';
 import {
   Alert,
   Box,
@@ -150,7 +150,9 @@ const parseCsvLine = (line: string): string[] => {
   return values;
 };
 
-const parseCsvText = (csvText: string) => {
+type RawCsvRow = { rowNumber: number } & Record<string, string>;
+
+const parseCsvText = (csvText: string): RawCsvRow[] => {
   const cleanText = csvText.replace(/^\uFEFF/, '').trim();
 
   if (!cleanText) {
@@ -179,7 +181,7 @@ const parseCsvText = (csvText: string) => {
     );
   }
 
-  return lines.slice(1).map((line, index) => {
+  return lines.slice(1).map((line, index): RawCsvRow => {
     const values = parseCsvLine(line);
     const row: Record<string, string> = {};
 
@@ -188,9 +190,9 @@ const parseCsvText = (csvText: string) => {
     });
 
     return {
-      rowNumber: index + 2,
       ...row,
-    };
+      rowNumber: index + 2,
+    } as RawCsvRow;
   });
 };
 
