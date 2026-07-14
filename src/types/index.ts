@@ -63,6 +63,7 @@ export interface Profile {
   school_id?: string | null;
   school_name?: string | null;
   is_super_admin?: boolean;
+  avatar_url?: string | null;
   updated_at?: string | null;
 }
 
