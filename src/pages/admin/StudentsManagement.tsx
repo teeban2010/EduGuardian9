@@ -1,11 +1,11 @@
 import {
+  ChangeEvent,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
-} from 'react';
-import type { ChangeEvent } from 'react';
+} from "react";
 import {
   Alert,
   Box,
@@ -28,17 +28,17 @@ import {
   TextField,
   Tooltip,
   Typography,
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import DownloadIcon from '@mui/icons-material/Download';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '../../contexts/AuthContext';
-import { useSchool } from '../../contexts/SchoolContext';
-import type { Student } from '../../types';
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import DownloadIcon from "@mui/icons-material/Download";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../contexts/AuthContext";
+import { useSchool } from "../../contexts/SchoolContext";
+import type { Student } from "../../types";
 
 interface StudentWithParentDetails extends Student {
   parent_full_name?: string | null;
@@ -72,34 +72,34 @@ interface CsvStudentRow {
   parent_full_name: string;
   parent_phone: string;
   parent_id: string | null;
-  parent_link_status: 'Linked' | 'Pending' | 'Needs Verification';
+  parent_link_status: "Linked" | "Pending" | "Needs Verification";
   validationErrors: string[];
 }
 
 const emptyForm: StudentForm = {
-  full_name: '',
-  student_id_number: '',
-  class_name: '',
-  grade_level: '',
-  date_of_birth: '',
-  parent_full_name: '',
-  parent_phone: '',
+  full_name: "",
+  student_id_number: "",
+  class_name: "",
+  grade_level: "",
+  date_of_birth: "",
+  parent_full_name: "",
+  parent_phone: "",
 };
 
 const REQUIRED_CSV_HEADERS = [
-  'full_name',
-  'student_id_number',
-  'class_name',
-  'grade_level',
-  'date_of_birth',
-  'parent_full_name',
-  'parent_phone',
+  "full_name",
+  "student_id_number",
+  "class_name",
+  "grade_level",
+  "date_of_birth",
+  "parent_full_name",
+  "parent_phone",
 ] as const;
 
 const normalisePhone = (phone: string | null | undefined) => {
-  let value = (phone ?? '').replace(/\D/g, '');
+  let value = (phone ?? "").replace(/\D/g, "");
 
-  if (value.startsWith('60')) {
+  if (value.startsWith("60")) {
     value = `0${value.slice(2)}`;
   }
 
@@ -107,7 +107,7 @@ const normalisePhone = (phone: string | null | undefined) => {
 };
 
 const normaliseName = (name: string | null | undefined) =>
-  (name ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+  (name ?? "").trim().replace(/\s+/g, " ").toLowerCase();
 
 const isValidIsoDate = (value: string) => {
   if (!value) return true;
@@ -119,7 +119,7 @@ const isValidIsoDate = (value: string) => {
 
 const parseCsvLine = (line: string): string[] => {
   const values: string[] = [];
-  let current = '';
+  let current = "";
   let insideQuotes = false;
 
   for (let index = 0; index < line.length; index += 1) {
@@ -137,9 +137,9 @@ const parseCsvLine = (line: string): string[] => {
       continue;
     }
 
-    if (character === ',' && !insideQuotes) {
+    if (character === "," && !insideQuotes) {
       values.push(current.trim());
-      current = '';
+      current = "";
       continue;
     }
 
@@ -150,13 +150,11 @@ const parseCsvLine = (line: string): string[] => {
   return values;
 };
 
-type RawCsvRow = { rowNumber: number } & Record<string, string>;
-
-const parseCsvText = (csvText: string): RawCsvRow[] => {
-  const cleanText = csvText.replace(/^\uFEFF/, '').trim();
+const parseCsvText = (csvText: string) => {
+  const cleanText = csvText.replace(/^\uFEFF/, "").trim();
 
   if (!cleanText) {
-    throw new Error('The selected CSV file is empty.');
+    throw new Error("The selected CSV file is empty.");
   }
 
   const lines = cleanText
@@ -164,7 +162,9 @@ const parseCsvText = (csvText: string): RawCsvRow[] => {
     .filter((line) => line.trim().length > 0);
 
   if (lines.length < 2) {
-    throw new Error('The CSV must contain a header row and at least one student row.');
+    throw new Error(
+      "The CSV must contain a header row and at least one student row.",
+    );
   }
 
   const headers = parseCsvLine(lines[0]).map((header) =>
@@ -176,23 +176,21 @@ const parseCsvText = (csvText: string): RawCsvRow[] => {
   );
 
   if (missingHeaders.length > 0) {
-    throw new Error(
-      `Missing CSV column(s): ${missingHeaders.join(', ')}`,
-    );
+    throw new Error(`Missing CSV column(s): ${missingHeaders.join(", ")}`);
   }
 
-  return lines.slice(1).map((line, index): RawCsvRow => {
+  return lines.slice(1).map((line, index) => {
     const values = parseCsvLine(line);
     const row: Record<string, string> = {};
 
     headers.forEach((header, headerIndex) => {
-      row[header] = values[headerIndex]?.trim() ?? '';
+      row[header] = values[headerIndex]?.trim() ?? "";
     });
 
     return {
-      ...row,
       rowNumber: index + 2,
-    } as RawCsvRow;
+      ...row,
+    };
   });
 };
 
@@ -207,27 +205,24 @@ export default function StudentsManagement() {
   const [editingStudent, setEditingStudent] =
     useState<StudentWithParentDetails | null>(null);
   const [form, setForm] = useState<StudentForm>(emptyForm);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [importRows, setImportRows] = useState<CsvStudentRow[]>([]);
-  const [importFileName, setImportFileName] = useState('');
+  const [importFileName, setImportFileName] = useState("");
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const role = profile?.role?.toLowerCase();
 
   const canManage = useMemo(
-    () =>
-      profile?.is_super_admin ||
-      role === 'admin' ||
-      role === 'teacher',
+    () => profile?.is_super_admin || role === "admin" || role === "teacher",
     [profile?.is_super_admin, role],
   );
 
   const canBulkImport = useMemo(
-    () => profile?.is_super_admin || role === 'admin',
+    () => profile?.is_super_admin || role === "admin",
     [profile?.is_super_admin, role],
   );
 
@@ -238,13 +233,13 @@ export default function StudentsManagement() {
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     const { data, error: studentsError } = await supabase
-      .from('students')
-      .select('*')
-      .eq('school_id', school.id)
-      .order('created_at', { ascending: false });
+      .from("students")
+      .select("*")
+      .eq("school_id", school.id)
+      .order("created_at", { ascending: false });
 
     if (studentsError) {
       setError(studentsError.message);
@@ -262,22 +257,22 @@ export default function StudentsManagement() {
   const openCreateDialog = () => {
     setEditingStudent(null);
     setForm(emptyForm);
-    setError('');
+    setError("");
     setDialogOpen(true);
   };
 
   const openEditDialog = (student: StudentWithParentDetails) => {
     setEditingStudent(student);
     setForm({
-      full_name: student.full_name ?? '',
-      student_id_number: student.student_id_number ?? '',
-      class_name: student.class_name ?? '',
-      grade_level: student.grade_level ?? '',
-      date_of_birth: student.date_of_birth ?? '',
-      parent_full_name: student.parent_full_name ?? '',
-      parent_phone: student.parent_phone ?? '',
+      full_name: student.full_name ?? "",
+      student_id_number: student.student_id_number ?? "",
+      class_name: student.class_name ?? "",
+      grade_level: student.grade_level ?? "",
+      date_of_birth: student.date_of_birth ?? "",
+      parent_full_name: student.parent_full_name ?? "",
+      parent_phone: student.parent_phone ?? "",
     });
-    setError('');
+    setError("");
     setDialogOpen(true);
   };
 
@@ -288,16 +283,16 @@ export default function StudentsManagement() {
     if (!school?.id) {
       return {
         parentId: null as string | null,
-        status: 'Pending' as const,
+        status: "Pending" as const,
       };
     }
 
     const { data, error: parentSearchError } = await supabase
-      .from('profiles')
-      .select('id, full_name, phone')
-      .eq('school_id', school.id)
-      .eq('role', 'parent')
-      .ilike('full_name', parentFullName.trim());
+      .from("profiles")
+      .select("id, full_name, phone")
+      .eq("school_id", school.id)
+      .eq("role", "parent")
+      .ilike("full_name", parentFullName.trim());
 
     if (parentSearchError) {
       throw parentSearchError;
@@ -314,20 +309,20 @@ export default function StudentsManagement() {
     if (exactMatches.length === 1) {
       return {
         parentId: exactMatches[0].id as string,
-        status: 'Linked' as const,
+        status: "Linked" as const,
       };
     }
 
     if (exactMatches.length > 1) {
       return {
         parentId: null as string | null,
-        status: 'Needs Verification' as const,
+        status: "Needs Verification" as const,
       };
     }
 
     return {
       parentId: null as string | null,
-      status: 'Pending' as const,
+      status: "Pending" as const,
     };
   };
 
@@ -340,13 +335,13 @@ export default function StudentsManagement() {
       !form.parent_phone.trim()
     ) {
       setError(
-        'Student name, parent full name and parent phone number are required.',
+        "Student name, parent full name and parent phone number are required.",
       );
       return;
     }
 
     setSaving(true);
-    setError('');
+    setError("");
 
     try {
       const { parentId, status } = await findMatchingParent(
@@ -370,10 +365,10 @@ export default function StudentsManagement() {
 
       const result = editingStudent
         ? await supabase
-            .from('students')
+            .from("students")
             .update(payload)
-            .eq('id', editingStudent.id)
-        : await supabase.from('students').insert(payload);
+            .eq("id", editingStudent.id)
+        : await supabase.from("students").insert(payload);
 
       if (result.error) {
         setError(result.error.message);
@@ -382,14 +377,14 @@ export default function StudentsManagement() {
 
       setDialogOpen(false);
       setSuccess(
-        `${editingStudent ? 'Student updated' : 'Student added'} successfully. Parent status: ${status}.`,
+        `${editingStudent ? "Student updated" : "Student added"} successfully. Parent status: ${status}.`,
       );
       await loadData();
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : 'Unable to match the parent account.',
+          : "Unable to match the parent account.",
       );
     } finally {
       setSaving(false);
@@ -403,49 +398,47 @@ export default function StudentsManagement() {
 
     if (!confirmed) return;
 
-    setError('');
+    setError("");
 
     const { error: deleteError } = await supabase
-      .from('students')
+      .from("students")
       .delete()
-      .eq('id', student.id);
+      .eq("id", student.id);
 
     if (deleteError) {
       setError(deleteError.message);
       return;
     }
 
-    setSuccess('Student removed successfully.');
+    setSuccess("Student removed successfully.");
     await loadData();
   };
 
   const handleDownloadTemplate = () => {
     const template =
-      'full_name,student_id_number,class_name,grade_level,date_of_birth,parent_full_name,parent_phone\n';
+      "full_name,student_id_number,class_name,grade_level,date_of_birth,parent_full_name,parent_phone\n";
 
     const blob = new Blob([`\uFEFF${template}`], {
-      type: 'text/csv;charset=utf-8;',
+      type: "text/csv;charset=utf-8;",
     });
 
     const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
+    const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = 'EduGuardian_Student_Bulk_Import_Template.csv';
+    anchor.download = "EduGuardian_Student_Bulk_Import_Template.csv";
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
     URL.revokeObjectURL(url);
   };
 
-  const handleCsvFileChange = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleCsvFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    event.target.value = '';
+    event.target.value = "";
 
     if (!file || !school?.id) return;
 
-    setError('');
+    setError("");
     setImportRows([]);
     setImportFileName(file.name);
 
@@ -454,10 +447,10 @@ export default function StudentsManagement() {
       const rawRows = parseCsvText(csvText);
 
       const { data: parentProfiles, error: parentError } = await supabase
-        .from('profiles')
-        .select('id, full_name, phone')
-        .eq('school_id', school.id)
-        .eq('role', 'parent');
+        .from("profiles")
+        .select("id, full_name, phone")
+        .eq("school_id", school.id)
+        .eq("role", "parent");
 
       if (parentError) {
         throw parentError;
@@ -471,7 +464,7 @@ export default function StudentsManagement() {
 
       const studentIdsWithinFile = new Map<string, number>();
       rawRows.forEach((row) => {
-        const studentId = (row.student_id_number ?? '').trim().toLowerCase();
+        const studentId = (row.student_id_number ?? "").trim().toLowerCase();
 
         if (studentId) {
           studentIdsWithinFile.set(
@@ -482,30 +475,30 @@ export default function StudentsManagement() {
       });
 
       const previewRows: CsvStudentRow[] = rawRows.map((row) => {
-        const fullName = (row.full_name ?? '').trim();
-        const studentIdNumber = (row.student_id_number ?? '').trim();
-        const className = (row.class_name ?? '').trim();
-        const gradeLevel = (row.grade_level ?? '').trim();
-        const dateOfBirth = (row.date_of_birth ?? '').trim();
-        const parentFullName = (row.parent_full_name ?? '').trim();
-        const parentPhone = (row.parent_phone ?? '').trim();
+        const fullName = (row.full_name ?? "").trim();
+        const studentIdNumber = (row.student_id_number ?? "").trim();
+        const className = (row.class_name ?? "").trim();
+        const gradeLevel = (row.grade_level ?? "").trim();
+        const dateOfBirth = (row.date_of_birth ?? "").trim();
+        const parentFullName = (row.parent_full_name ?? "").trim();
+        const parentPhone = (row.parent_phone ?? "").trim();
 
         const validationErrors: string[] = [];
 
-        if (!fullName) validationErrors.push('Student name is required.');
+        if (!fullName) validationErrors.push("Student name is required.");
         if (!studentIdNumber) {
-          validationErrors.push('Student ID is required.');
+          validationErrors.push("Student ID is required.");
         }
-        if (!className) validationErrors.push('Class is required.');
-        if (!gradeLevel) validationErrors.push('Grade/Form is required.');
+        if (!className) validationErrors.push("Class is required.");
+        if (!gradeLevel) validationErrors.push("Grade/Form is required.");
         if (!parentFullName) {
-          validationErrors.push('Parent full name is required.');
+          validationErrors.push("Parent full name is required.");
         }
         if (!normalisePhone(parentPhone)) {
-          validationErrors.push('Parent phone is required.');
+          validationErrors.push("Parent phone is required.");
         }
         if (!isValidIsoDate(dateOfBirth)) {
-          validationErrors.push('Date must use YYYY-MM-DD.');
+          validationErrors.push("Date must use YYYY-MM-DD.");
         }
 
         const normalisedStudentId = studentIdNumber.toLowerCase();
@@ -514,34 +507,33 @@ export default function StudentsManagement() {
           normalisedStudentId &&
           existingStudentIds.has(normalisedStudentId)
         ) {
-          validationErrors.push('Student ID already exists in this school.');
+          validationErrors.push("Student ID already exists in this school.");
         }
 
         if (
           normalisedStudentId &&
           (studentIdsWithinFile.get(normalisedStudentId) ?? 0) > 1
         ) {
-          validationErrors.push('Student ID is duplicated within this CSV.');
+          validationErrors.push("Student ID is duplicated within this CSV.");
         }
 
-        const matchingParents = (parentProfiles as ParentProfile[] | null ?? [])
-          .filter(
-            (parent) =>
-              normaliseName(parent.full_name) === normaliseName(parentFullName) &&
-              normalisePhone(parent.phone) === normalisePhone(parentPhone),
-          );
+        const matchingParents = (
+          (parentProfiles as ParentProfile[] | null) ?? []
+        ).filter(
+          (parent) =>
+            normaliseName(parent.full_name) === normaliseName(parentFullName) &&
+            normalisePhone(parent.phone) === normalisePhone(parentPhone),
+        );
 
         let parentId: string | null = null;
-        let parentLinkStatus:
-          | 'Linked'
-          | 'Pending'
-          | 'Needs Verification' = 'Pending';
+        let parentLinkStatus: "Linked" | "Pending" | "Needs Verification" =
+          "Pending";
 
         if (matchingParents.length === 1) {
           parentId = matchingParents[0].id;
-          parentLinkStatus = 'Linked';
+          parentLinkStatus = "Linked";
         } else if (matchingParents.length > 1) {
-          parentLinkStatus = 'Needs Verification';
+          parentLinkStatus = "Needs Verification";
         }
 
         return {
@@ -562,11 +554,11 @@ export default function StudentsManagement() {
       setImportRows(previewRows);
       setImportDialogOpen(true);
     } catch (caughtError) {
-      setImportFileName('');
+      setImportFileName("");
       setError(
         caughtError instanceof Error
           ? caughtError.message
-          : 'Unable to read the selected CSV file.',
+          : "Unable to read the selected CSV file.",
       );
     }
   };
@@ -579,12 +571,12 @@ export default function StudentsManagement() {
     );
 
     if (validRows.length === 0) {
-      setError('There are no valid rows available to import.');
+      setError("There are no valid rows available to import.");
       return;
     }
 
     setImporting(true);
-    setError('');
+    setError("");
 
     const payload = validRows.map((row) => ({
       full_name: row.full_name,
@@ -601,7 +593,7 @@ export default function StudentsManagement() {
     }));
 
     const { error: importError } = await supabase
-      .from('students')
+      .from("students")
       .insert(payload);
 
     setImporting(false);
@@ -615,12 +607,12 @@ export default function StudentsManagement() {
 
     setImportDialogOpen(false);
     setImportRows([]);
-    setImportFileName('');
+    setImportFileName("");
     setSuccess(
       `${validRows.length} student(s) imported successfully.${
         rejectedCount > 0
           ? ` ${rejectedCount} invalid row(s) were not imported.`
-          : ''
+          : ""
       }`,
     );
 
@@ -629,11 +621,11 @@ export default function StudentsManagement() {
 
   const getStatusColour = (
     status: string | null | undefined,
-  ): 'success' | 'warning' | 'error' | 'default' => {
-    if (status === 'Linked') return 'success';
-    if (status === 'Needs Verification') return 'error';
-    if (status === 'Pending') return 'warning';
-    return 'default';
+  ): "success" | "warning" | "error" | "default" => {
+    if (status === "Linked") return "success";
+    if (status === "Needs Verification") return "error";
+    if (status === "Pending") return "warning";
+    return "default";
   };
 
   const validImportCount = importRows.filter(
@@ -661,7 +653,7 @@ export default function StudentsManagement() {
       />
 
       <Stack
-        direction={{ xs: 'column', md: 'row' }}
+        direction={{ xs: "column", md: "row" }}
         justifyContent="space-between"
         gap={2}
         mb={3}
@@ -672,15 +664,12 @@ export default function StudentsManagement() {
           </Typography>
 
           <Typography color="text.secondary">
-            Add, edit, remove, or import student records for{' '}
-            {school?.school_name ?? 'this school'}.
+            Add, edit, remove, or import student records for{" "}
+            {school?.school_name ?? "this school"}.
           </Typography>
         </Box>
 
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          gap={1}
-        >
+        <Stack direction={{ xs: "column", sm: "row" }} gap={1}>
           <Tooltip title="Refresh">
             <IconButton onClick={loadData} disabled={loading}>
               <RefreshIcon />
@@ -718,21 +707,13 @@ export default function StudentsManagement() {
       </Stack>
 
       {error && (
-        <Alert
-          severity="error"
-          sx={{ mb: 2 }}
-          onClose={() => setError('')}
-        >
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
           {error}
         </Alert>
       )}
 
       {success && (
-        <Alert
-          severity="success"
-          sx={{ mb: 2 }}
-          onClose={() => setSuccess('')}
-        >
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess("")}>
           {success}
         </Alert>
       )}
@@ -771,19 +752,17 @@ export default function StudentsManagement() {
                       </Typography>
                     </TableCell>
 
-                    <TableCell>
-                      {student.student_id_number || '—'}
-                    </TableCell>
+                    <TableCell>{student.student_id_number || "—"}</TableCell>
 
-                    <TableCell>{student.class_name || '—'}</TableCell>
-                    <TableCell>{student.grade_level || '—'}</TableCell>
-                    <TableCell>{student.parent_full_name || '—'}</TableCell>
-                    <TableCell>{student.parent_phone || '—'}</TableCell>
+                    <TableCell>{student.class_name || "—"}</TableCell>
+                    <TableCell>{student.grade_level || "—"}</TableCell>
+                    <TableCell>{student.parent_full_name || "—"}</TableCell>
+                    <TableCell>{student.parent_phone || "—"}</TableCell>
 
                     <TableCell>
                       <Chip
                         size="small"
-                        label={student.parent_link_status || 'Not Set'}
+                        label={student.parent_link_status || "Not Set"}
                         color={getStatusColour(student.parent_link_status)}
                         variant="outlined"
                       />
@@ -791,9 +770,7 @@ export default function StudentsManagement() {
 
                     <TableCell align="right">
                       <Tooltip title="Edit">
-                        <IconButton
-                          onClick={() => openEditDialog(student)}
-                        >
+                        <IconButton onClick={() => openEditDialog(student)}>
                           <EditIcon />
                         </IconButton>
                       </Tooltip>
@@ -822,7 +799,7 @@ export default function StudentsManagement() {
         maxWidth="sm"
       >
         <DialogTitle>
-          {editingStudent ? 'Edit Student' : 'Add Student'}
+          {editingStudent ? "Edit Student" : "Add Student"}
         </DialogTitle>
 
         <DialogContent>
@@ -852,7 +829,7 @@ export default function StudentsManagement() {
               fullWidth
             />
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
+            <Stack direction={{ xs: "column", sm: "row" }} gap={2}>
               <TextField
                 label="Class"
                 value={form.class_name}
@@ -921,9 +898,9 @@ export default function StudentsManagement() {
             />
 
             <Alert severity="info">
-              EduGuardian automatically links the student when the parent’s
-              full name, phone number and school match an existing parent
-              account. Otherwise, the record is saved as Pending.
+              EduGuardian automatically links the student when the parent’s full
+              name, phone number and school match an existing parent account.
+              Otherwise, the record is saved as Pending.
             </Alert>
 
             {error && <Alert severity="error">{error}</Alert>}
@@ -931,19 +908,12 @@ export default function StudentsManagement() {
         </DialogContent>
 
         <DialogActions>
-          <Button
-            onClick={() => setDialogOpen(false)}
-            disabled={saving}
-          >
+          <Button onClick={() => setDialogOpen(false)} disabled={saving}>
             Cancel
           </Button>
 
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : 'Save'}
+          <Button variant="contained" onClick={handleSave} disabled={saving}>
+            {saving ? "Saving..." : "Save"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -963,7 +933,7 @@ export default function StudentsManagement() {
               validation errors will be imported.
             </Alert>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} gap={1}>
+            <Stack direction={{ xs: "column", sm: "row" }} gap={1}>
               <Chip
                 label={`${validImportCount} ready to import`}
                 color="success"
@@ -971,7 +941,7 @@ export default function StudentsManagement() {
               />
               <Chip
                 label={`${invalidImportCount} need correction`}
-                color={invalidImportCount > 0 ? 'error' : 'default'}
+                color={invalidImportCount > 0 ? "error" : "default"}
                 variant="outlined"
               />
             </Stack>
@@ -999,19 +969,17 @@ export default function StudentsManagement() {
                       sx={{
                         bgcolor:
                           row.validationErrors.length > 0
-                            ? 'error.lighter'
+                            ? "error.lighter"
                             : undefined,
                       }}
                     >
                       <TableCell>{row.rowNumber}</TableCell>
-                      <TableCell>{row.full_name || '—'}</TableCell>
-                      <TableCell>
-                        {row.student_id_number || '—'}
-                      </TableCell>
-                      <TableCell>{row.class_name || '—'}</TableCell>
-                      <TableCell>{row.grade_level || '—'}</TableCell>
-                      <TableCell>{row.parent_full_name || '—'}</TableCell>
-                      <TableCell>{row.parent_phone || '—'}</TableCell>
+                      <TableCell>{row.full_name || "—"}</TableCell>
+                      <TableCell>{row.student_id_number || "—"}</TableCell>
+                      <TableCell>{row.class_name || "—"}</TableCell>
+                      <TableCell>{row.grade_level || "—"}</TableCell>
+                      <TableCell>{row.parent_full_name || "—"}</TableCell>
+                      <TableCell>{row.parent_phone || "—"}</TableCell>
                       <TableCell>
                         <Chip
                           size="small"
@@ -1032,9 +1000,9 @@ export default function StudentsManagement() {
                           <Typography
                             variant="caption"
                             color="error"
-                            sx={{ whiteSpace: 'pre-line' }}
+                            sx={{ whiteSpace: "pre-line" }}
                           >
-                            {row.validationErrors.join('\n')}
+                            {row.validationErrors.join("\n")}
                           </Typography>
                         )}
                       </TableCell>
@@ -1060,7 +1028,7 @@ export default function StudentsManagement() {
             disabled={importing || validImportCount === 0}
           >
             {importing
-              ? 'Importing...'
+              ? "Importing..."
               : `Import ${validImportCount} Student(s)`}
           </Button>
         </DialogActions>

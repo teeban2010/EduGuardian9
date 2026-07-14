@@ -38,6 +38,9 @@ import TeacherDashboard from './pages/teacher/Dashboard';
 import AdminDashboard from './pages/admin/Dashboard';
 import SuperAdminDashboard from './pages/admin/SuperAdminDashboard';
 import StudentsManagement from './pages/admin/StudentsManagement';
+import UsersManagement from './pages/admin/UsersManagement';
+import AnnouncementsManagement from './pages/admin/AnnouncementsManagement';
+import ReportsDashboard from './pages/admin/ReportsDashboard';
 import GuestDashboard from './pages/guest/GuestDashboard';
 
 function RoleDashboard() {
@@ -208,6 +211,37 @@ function AppRoutes() {
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/students" element={<ProtectedRoute><StaffRoute><StudentsManagement /></StaffRoute></ProtectedRoute>} />
+      <Route
+  path="/users"
+  element={
+    <ProtectedRoute>
+      <StaffRoute>
+        <UsersManagement />
+      </StaffRoute>
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/announcements"
+  element={
+    <ProtectedRoute>
+      <StaffRoute>
+        <AnnouncementsManagement />
+      </StaffRoute>
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/reports"
+  element={
+    <ProtectedRoute>
+      <StaffRoute>
+        <ReportsDashboard />
+      </StaffRoute>
+    </ProtectedRoute>
+  }
+/>
       <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
 
       {/* Catch all */}

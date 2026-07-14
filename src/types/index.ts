@@ -59,7 +59,6 @@ export interface Profile {
   email?: string | null;
   full_name?: string | null;
   phone?: string | null;
-  avatar_url?: string | null;
   role?: UserRole | null;
   school_id?: string | null;
   school_name?: string | null;
