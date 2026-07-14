@@ -37,7 +37,6 @@ import { supabase } from '../lib/supabase';
 import type { School } from '../types';
 import { useSchool } from '../contexts/SchoolContext';
 
-const SCHOOL_CODE_EXAMPLES = ['NEE4099', 'SMKCYBER001', 'SKPUTRA001', 'MRSM001', 'SBP001'];
 
 const FEATURES = [
   { icon: <SmartToyIcon />, title: 'AI-Powered Assistant', desc: 'Intelligent insights, homework help, and personalized recommendations for student success', color: '#2563EB' },
@@ -408,34 +407,30 @@ export default function Landing() {
                     Continue
                   </Button>
 
-                  {/* Example codes */}
-                  <Box sx={{ textAlign: 'center', mb: 3 }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-                      Example school codes:
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', justifyContent: 'center' }}>
-                      {SCHOOL_CODE_EXAMPLES.map((code) => (
-                        <Chip
-                          key={code} label={code} size="small" onClick={() => setSchoolCode(code)}
-                          sx={{
-                            cursor: 'pointer', fontFamily: 'monospace', fontWeight: 700, fontSize: '0.7rem',
-                            bgcolor: alpha(theme.palette.primary.main, 0.06), color: 'primary.main',
-                            border: '1px solid', borderColor: alpha(theme.palette.primary.main, 0.15),
-                            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.12) },
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  </Box>
 
-                  <Divider sx={{ mb: 3 }}><Typography variant="caption" color="text.secondary">OR</Typography></Divider>
+<Divider sx={{ mb: 3 }}>
+  <Typography
+    variant="caption"
+    color="text.secondary"
+  >
+    OR
+  </Typography>
+</Divider>
 
-                  <Box sx={{ textAlign: 'center' }}>
-                    <Button variant="text" onClick={() => setShowSearch(true)} startIcon={<SearchIcon />}
-                      sx={{ color: 'text.secondary', fontWeight: 600, textTransform: 'none' }}>
-                      Don't know your school code? Search your school
-                    </Button>
-                  </Box>
+<Box sx={{ textAlign: 'center' }}>
+  <Button
+    variant="text"
+    onClick={() => setShowSearch(true)}
+    startIcon={<SearchIcon />}
+    sx={{
+      color: 'text.secondary',
+      fontWeight: 600,
+      textTransform: 'none',
+    }}
+  >
+    Don't know your school code? Search your school
+  </Button>
+</Box>
                 </>
               ) : (
                 <>

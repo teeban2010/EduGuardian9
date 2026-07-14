@@ -1,8 +1,33 @@
-export type Role = 'parent' | 'teacher' | 'student' | 'counselor' | 'admin' | 'super_admin';
+export type UserRole =
+  | 'parent'
+  | 'teacher'
+  | 'student'
+  | 'counselor'
+  | 'admin'
+  | 'super_admin';
 
-export type SchoolType = 'SK' | 'SJKC' | 'SJKT' | 'SMK' | 'SMJK' | 'MRSM' | 'SBP' | 'PRIVATE' | 'INTERNATIONAL';
-export type SubscriptionTier = 'free' | 'basic' | 'premium' | 'enterprise';
-export type SchoolStatus = 'pending' | 'active' | 'suspended' | 'inactive';
+export type SchoolType =
+  | 'SK'
+  | 'SJKC'
+  | 'SJKT'
+  | 'SMK'
+  | 'SMJK'
+  | 'MRSM'
+  | 'SBP'
+  | 'PRIVATE'
+  | 'INTERNATIONAL';
+
+export type SubscriptionTier =
+  | 'free'
+  | 'basic'
+  | 'premium'
+  | 'enterprise';
+
+export type SchoolStatus =
+  | 'pending'
+  | 'active'
+  | 'suspended'
+  | 'inactive';
 
 export interface School {
   id: string;
@@ -31,28 +56,32 @@ export interface School {
 
 export interface Profile {
   id: string;
-  full_name: string | null;
-  email: string | null;
-  avatar_url: string | null;
-  role: Role;
-  phone: string | null;
-  school_id: string | null;
-  is_super_admin: boolean;
-  created_at: string;
-  updated_at: string;
+  email?: string | null;
+  full_name?: string | null;
+  phone?: string | null;
+  role?: UserRole | null;
+  school_id?: string | null;
+  school_name?: string | null;
+  is_super_admin?: boolean;
+  updated_at?: string | null;
 }
 
 export interface Student {
   id: string;
-  parent_id: string;
+  parent_id: string | null;
   school_id: string | null;
+  profile_id?: string | null;
   full_name: string;
   date_of_birth: string | null;
+  school_name?: string | null;
   class_name: string | null;
   grade_level: string | null;
   avatar_url: string | null;
   student_id_number: string | null;
   created_at: string;
+  parent_full_name?: string | null;
+  parent_phone?: string | null;
+  parent_link_status?: string | null;
 }
 
 export interface Subject {
@@ -125,7 +154,15 @@ export interface Notification {
   user_id: string;
   title: string;
   message: string;
-  type: 'info' | 'warning' | 'success' | 'error' | 'homework' | 'attendance' | 'exam' | 'announcement';
+  type:
+    | 'info'
+    | 'warning'
+    | 'success'
+    | 'error'
+    | 'homework'
+    | 'attendance'
+    | 'exam'
+    | 'announcement';
   is_read: boolean;
   link: string | null;
   created_at: string;
@@ -156,7 +193,12 @@ export interface CalendarEvent {
   id: string;
   title: string;
   description: string | null;
-  type: 'homework' | 'exam' | 'meeting' | 'holiday' | 'general';
+  type:
+    | 'homework'
+    | 'exam'
+    | 'meeting'
+    | 'holiday'
+    | 'general';
   start_date: string;
   end_date: string | null;
   all_day: boolean;

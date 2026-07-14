@@ -41,13 +41,52 @@ import StudentsManagement from './pages/admin/StudentsManagement';
 import GuestDashboard from './pages/guest/GuestDashboard';
 
 function RoleDashboard() {
-  const { profile, user } = useAuth();
+  const { profile, user, loading } = useAuth();
   const { isGuest } = useSchool();
-  if (isGuest && !user) return <GuestDashboard />;
-  if (profile?.is_super_admin) return <SuperAdminDashboard />;
-  if (profile?.role === 'admin') return <AdminDashboard />;
-  if (profile?.role === 'teacher') return <TeacherDashboard />;
-  return <ParentDashboard />;
+
+  if (loading) {
+    return <LoadingSpinner message="Loading dashboard..." />;
+  }
+
+  if (isGuest && !user) {
+    return <GuestDashboard />;
+  }
+
+  if (!profile) {
+    return (
+      <div style={{ padding: 24 }}>
+        Your user profile could not be loaded. Please contact the administrator.
+      </div>
+    );
+  }
+
+  if (profile.is_super_admin) {
+    return <SuperAdminDashboard />;
+  }
+
+  switch (profile.role?.toLowerCase()) {
+    case 'admin':
+      return <AdminDashboard />;
+
+    case 'teacher':
+      return <TeacherDashboard />;
+
+    case 'parent':
+      return <ParentDashboard />;
+
+    case 'student':
+      return <ParentDashboard />; // temporary competition fallback
+
+    case 'counselor':
+      return <TeacherDashboard />; // temporary competition fallback
+
+    default:
+      return (
+        <div style={{ padding: 24 }}>
+          No dashboard has been configured for this role.
+        </div>
+      );
+  }
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -71,9 +110,23 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 
 function StaffRoute({ children }: { children: React.ReactNode }) {
-  const { profile } = useAuth();
-  const allowed = profile?.is_super_admin || profile?.role === 'admin' || profile?.role === 'teacher';
-  if (!allowed) return <Navigate to="/dashboard" replace />;
+  const { profile, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner message="Checking permissions..." />;
+  }
+
+  const role = profile?.role?.toLowerCase();
+
+  const allowed =
+    profile?.is_super_admin ||
+    role === 'admin' ||
+    role === 'teacher';
+
+  if (!allowed) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 }
 
@@ -82,6 +135,22 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isGuest } = useSchool();
   if (loading) return <LoadingSpinner fullScreen message="Loading..." />;
   if (user && !isGuest) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
+function ParentRoute({ children }: { children: React.ReactNode }) {
+  const { profile, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner message="Checking permissions..." />;
+  }
+
+  const role = profile?.role?.toLowerCase();
+
+  if (role !== 'parent') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 }
 
@@ -124,7 +193,16 @@ function AppRoutes() {
       <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
       <Route path="/discipline" element={<ProtectedRoute><DisciplineRecord /></ProtectedRoute>} />
       <Route path="/resources" element={<ProtectedRoute><ResourceLibrary /></ProtectedRoute>} />
-      <Route path="/profile" element={<ProtectedRoute><ChildProfile /></ProtectedRoute>} />
+      <Route
+  path="/profile"
+  element={
+    <ProtectedRoute>
+      <ParentRoute>
+        <ChildProfile />
+      </ParentRoute>
+    </ProtectedRoute>
+  }
+/>
       <Route path="/school-info" element={<ProtectedRoute><SchoolInfo /></ProtectedRoute>} />
       <Route path="/canteen" element={<ProtectedRoute><CanteenMenu /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
