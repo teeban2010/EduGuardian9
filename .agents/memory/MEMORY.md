@@ -1,0 +1,1 @@
+- [Supabase secret entry via requestSecrets can silently corrupt values](requestsecrets-corruption.md) — always verify saved secret shape (length/prefix) before trusting it, especially when two secrets share a substring.
